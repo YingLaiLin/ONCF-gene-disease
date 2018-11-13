@@ -25,22 +25,24 @@ class Dataset(object):
         self.trainList = self.load_training_file_as_list(path + ".train.rating")
         self.testRatings = self.load_rating_file_as_list(path + ".test.rating")
         self.testNegatives = self.load_negative_file(path + ".test.negative")
-        assert len(self.testRatings) == len(self.testNegatives)
-        self.num_users, self.num_items = self.trainMatrix.shape
+        assert len(self.testRatings) == len(self.testNegatives.keys())
+        self.num_users, self.num_items = (12331,3209)
+        # self.num_users, self.num_items = self.trainMatrix.shape
 
     def load_rating_file_as_list(self, filename):
-        ratingList = []
+        ratingList = {}
         with open(filename, "r") as f:
             line = f.readline()
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item = int(arr[0]), int(arr[1])
-                ratingList.append([user, item])
+                # ratingList.append([user, item])
+                ratingList[user] = item
                 line = f.readline()
         return ratingList
 
     def load_negative_file(self, filename):
-        negativeList = []
+        negativeList = {}
         with open(filename, "r") as f:
             line = f.readline()
             while line != None and line != "":
@@ -48,7 +50,7 @@ class Dataset(object):
                 negatives = []
                 for x in arr[1: ]:
                     negatives.append(int(x))
-                negativeList.append(negatives)
+                negativeList[int(arr[0])] = negatives
                 line = f.readline()
         return negativeList
 
@@ -58,14 +60,14 @@ class Dataset(object):
         The first line of .rating file is: num_users\t num_items
         '''
         # Get number of users and items
-        num_users, num_items = 0, 0
+        num_users, num_items = 12331, 3209
         with open(filename, "r") as f:
             line = f.readline()
             while line != None and line != "":
                 arr = line.split("\t")
                 u, i = int(arr[0]), int(arr[1])
-                num_users = max(num_users, u)
-                num_items = max(num_items, i)
+                # num_users = max(num_users, u)
+                # num_items = max(num_items, i)
                 line = f.readline()
         # Construct matrix
         mat = sp.dok_matrix((num_users+1, num_items+1), dtype=np.float32)

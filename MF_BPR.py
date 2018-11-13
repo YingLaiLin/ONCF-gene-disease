@@ -32,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run MF-BPR.")
     parser.add_argument('--path', nargs='?', default='Data/',
                         help='Input data path.')
-    parser.add_argument('--dataset', nargs='?', default='yelp',
+    parser.add_argument('--dataset', nargs='?', default='gene',
                         help='Choose a dataset.')
     parser.add_argument('--model', nargs='?', default='MF',
                         help='Choose model: MF')
@@ -108,7 +108,7 @@ def _get_train_batch(i):
             user = _user_input[_index[idx]]
             user_neg_batch.append(user)
             # negtive k
-            gtItem = _dataset.testRatings[user][1]
+            gtItem = _dataset.testRatings[user]
             j = np.random.randint(_dataset.num_items)
             while j in _dataset.trainList[_user_input[_index[idx]]] or j == gtItem:
                 j = np.random.randint(_dataset.num_items)
@@ -336,6 +336,9 @@ def output_evaluate(model, sess, dataset, train_batches, eval_feed_dicts, epoch_
 
     return post_acc, ndcg, res
 
+
+
+
 def init_eval_model(model, dataset):
     global _dataset
     global _model
@@ -343,7 +346,14 @@ def init_eval_model(model, dataset):
     _model = model
 
     pool = Pool(cpu_count())
-    feed_dicts = pool.map(_evaluate_input, range(_dataset.num_users))
+    try:
+        feed_dicts = pool.map(_evaluate_input, _dataset.testNegatives.keys())
+    except Exception:
+        print('Exception in pooling feed_dict')
+        import traceback
+        traceback.print_exc()
+        raise
+        
     pool.close()
     pool.join()
 
@@ -352,11 +362,16 @@ def init_eval_model(model, dataset):
 
 def _evaluate_input(user):
     # generate items_list
-    item_input = dataset.testNegatives[user] # read negative samples from files
-    test_item = _dataset.testRatings[user][1]
-    item_input.append(test_item)
-    user_input = np.full(len(item_input), user, dtype='int32')[:, None]
-    item_input = np.array(item_input)[:,None]
+    try:
+        item_input = dataset.testNegatives[user] # read negative samples from files
+        test_item = _dataset.testRatings[user]
+        item_input.append(test_item)
+        user_input = np.full(len(item_input), user, dtype='int32')[:, None]
+        item_input = np.array(item_input)[:,None]
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        raise
     return user_input, item_input
 
 

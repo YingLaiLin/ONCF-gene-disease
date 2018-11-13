@@ -40,17 +40,17 @@ def parse_args():
                         help='Choose a dataset.')
     parser.add_argument('--model', nargs='?', default='ConvNCF',
                         help='Choose model: ConvNCF')
-    parser.add_argument('--verbose', type=int, default=100,
+    parser.add_argument('--verbose', type=int, default=5,
                         help='Interval of evaluation.')
-    parser.add_argument('--batch_size', type=int, default=512,
+    parser.add_argument('--batch_size', type=int, default=256,
                         help='batch_size')
-    parser.add_argument('--epochs', type=int, default=1500,
+    parser.add_argument('--epochs', type=int, default=1000,
                         help='Number of epochs.')
     parser.add_argument('--embed_size', type=int, default=64,
                         help='Embedding size.')
     parser.add_argument('--hidden_size', type=int, default=128,
                         help='Number of hidden neurons.')
-    parser.add_argument('--dns', type=int, default=1,
+    parser.add_argument('--dns', type=int, default=5,
                         help='number of negative sample for each positive in dns.')
     parser.add_argument('--regs', nargs='?', default='[0.01,10,1]',
                         help='Regularization for user and item embeddings, fully-connected weights, CNN filter weights.')
@@ -62,13 +62,14 @@ def parse_args():
                         help='Learning rate for embeddings.')
     parser.add_argument('--lr_net', type=float, default=0.05,
                         help='Learning rate for CNN.')
-    parser.add_argument('--net_channel', nargs='?', default='[32,32,32,32,32,32]',	
+                        # net_channel [32,32,32,32,32,32]
+    parser.add_argument('--net_channel', nargs='?', default='[8,8,8,8,8,8]',	
                         help='net_channel, should be 6 layers here')
     parser.add_argument('--pretrain', type=int, default=0,
                         help='Use the pretraining weights or not')
     parser.add_argument('--ckpt', type=int, default=0,
                         help='Save the pretraining weights or not')
-    parser.add_argument('--train_auc', type=int, default=0,
+    parser.add_argument('--train_auc', type=int, default=1,
                         help='Calculate train_auc or not')
     parser.add_argument('--keep', type=float, default=1.0,
                         help='keep probability in training')
@@ -124,7 +125,7 @@ def _get_train_batch(i):
             user = _user_input[_index[idx]]
             user_neg_batch.append(user)
             # negtive k
-            gtItem = _dataset.testRatings[user][1]
+            gtItem = _dataset.testRatings[user]
             j = np.random.randint(_dataset.num_items)
             while j in _dataset.trainList[_user_input[_index[idx]]] or j == gtItem:
                 j = np.random.randint(_dataset.num_items)
@@ -451,7 +452,8 @@ def init_eval_model(model, dataset):
 def _evaluate_input(user):
     # generate items_list
     item_input = dataset.testNegatives[user] # read negative samples from files
-    test_item = _dataset.testRatings[user][1]
+    # test_item = _dataset.testRatings[user][1]
+    test_item = _dataset.testRatings[user]
     item_input.append(test_item)
     user_input = np.full(len(item_input), user, dtype='int32')[:, None]
     item_input = np.array(item_input)[:,None]
